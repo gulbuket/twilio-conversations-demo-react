@@ -53,7 +53,15 @@ async function handleParticipantsUpdate(
   updateParticipants: SetParticipantsType
 ) {
   const result = await getConversationParticipants(participant.conversation);
-  updateParticipants(result, participant.conversation.sid);
+  const modifiedParticipants: any[] = [];
+  result.forEach(async (participant) => {
+    const user = await participant.getUser();
+
+    modifiedParticipants.push({ ...participant, isOnline: user.isOnline });
+  });
+
+  console.log("Modified: ", modifiedParticipants);
+  updateParticipants(modifiedParticipants, participant.conversation.sid);
 }
 
 async function getSubscribedConversations(
@@ -91,6 +99,8 @@ const AppContainer: React.FC = () => {
     updateUnreadMessages,
     startTyping,
     endTyping,
+    //todo:
+    userReachabilityUpdated,
     addConversation,
     login,
     removeMessages,
@@ -174,7 +184,6 @@ const AppContainer: React.FC = () => {
       if (message.author === localStorage.getItem("username")) {
         clearAttachments(message.conversation.sid, "-1");
       }
-
     });
     client.on("participantLeft", (participant) => {
       handlePromiseRejection(
@@ -228,6 +237,14 @@ const AppContainer: React.FC = () => {
           login(token);
         });
       }
+    });
+
+    // todo: userOnlineStatus
+    client.on("userUpdated", ({ user, updateReasons }) => {
+      handlePromiseRejection(
+        () => userReachabilityUpdated(user, updateReasons),
+        addNotifications
+      );
     });
 
     updateLoadingState(false);

@@ -193,3 +193,13 @@ export const removeNotifications = (toIndex: number) => {
     });
   };
 };
+
+//todo:
+export const userReachabilityUpdated = (user: any, updateReasons: any) => {
+  return (dispatch: Dispatch<Action>): void => {
+    dispatch({
+      type: ActionType.REACHABILITY_CHANGED,
+      payload: { user, updateReasons },
+    });
+  };
+};

@@ -27,7 +27,7 @@ type ParticipantResponse = ReturnType<typeof Conversation.prototype.add>;
 
 export async function addConversation(
   name: string,
-  updateParticipants: (participants: Participant[], sid: string) => void,
+  updateParticipants: (participants: Participant[] | any, sid: string) => void,
   client?: Client,
   addNotifications?: (notifications: NotificationsType) => void
 ): Promise<Conversation> {
@@ -39,7 +39,16 @@ export async function addConversation(
       await conversation.join();
 
       const participants = await getConversationParticipants(conversation);
-      updateParticipants(participants, conversation.sid);
+
+      const modifiedParticipants = participants.map(async (participant) => {
+        const isOnline = (await participant.getUser()).isOnline;
+        console.log("api: ", isOnline);
+        return { ...participant, isOnline };
+      });
+
+      console.log("Midofied: ", modifiedParticipants);
+
+      updateParticipants(modifiedParticipants, conversation.sid);
 
       successNotification({
         message: CONVERSATION_MESSAGES.CREATED,
@@ -105,25 +114,20 @@ export async function getToken(
 ): Promise<string> {
   const requestAddress = process.env
     .REACT_APP_ACCESS_TOKEN_SERVICE_URL as string;
-  if (!requestAddress) {
-    return Promise.reject(
-      "REACT_APP_ACCESS_TOKEN_SERVICE_URL is not configured, cannot login"
-    );
-  }
 
-  try {
-    const response = await axios.get(requestAddress, {
-      params: { identity: username, password: password },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      return Promise.reject(error.response.data ?? "Authentication error.");
-    }
+  const response = await axios.get(`${requestAddress}${password}/${username}`);
 
-    process.stderr?.write(`ERROR received from ${requestAddress}: ${error}\n`);
-    return Promise.reject(`ERROR received from ${requestAddress}: ${error}\n`);
-  }
+  //todo: token
+  //return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJqdGkiOiJTSzg2YWY4NGIxM2QwNTNmMDhhODhhOGYxZTFiNWE5YTIwLTE2NjgwODE0NDEiLCJncmFudHMiOnsiaWRlbnRpdHkiOiJCdWtldDIiLCJjaGF0Ijp7InNlcnZpY2Vfc2lkIjoiSVMzYTYzMmNiYjUyYmE0NzU3YjBiNTA5YzExNzQzZGI0OSJ9fSwiaWF0IjoxNjY4MDgxNDQxLCJleHAiOjE2NjgwODUwNDEsImlzcyI6IlNLODZhZjg0YjEzZDA1M2YwOGE4OGE4ZjFlMWI1YTlhMjAiLCJzdWIiOiJBQzJhYjE1NjE5OWM4NWNjZDZjNDU1YjRmM2M2NDRlMDFjIn0.W9bGGmo_hWxScIYBKhIlNFd01fDo4VWFGOodlQk75_8";
+  return response.data.token;
+
+  // if (username == "wewe") {
+  //   return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJqdGkiOiJTSzg2YWY4NGIxM2QwNTNmMDhhODhhOGYxZTFiNWE5YTIwLTE2NjgwNjA0MzQiLCJncmFudHMiOnsiaWRlbnRpdHkiOiJCdWtldEd1bCIsImNoYXQiOnsic2VydmljZV9zaWQiOiJJUzNhNjMyY2JiNTJiYTQ3NTdiMGI1MDljMTE3NDNkYjQ5In19LCJpYXQiOjE2NjgwNjA0MzQsImV4cCI6MTY2ODA2NDAzNCwiaXNzIjoiU0s4NmFmODRiMTNkMDUzZjA4YTg4YThmMWUxYjVhOWEyMCIsInN1YiI6IkFDMmFiMTU2MTk5Yzg1Y2NkNmM0NTViNGYzYzY0NGUwMWMifQ._r3LsA99d-PT_vjkYjarvgoUWRMnmMdp3MTEYMyuHxA";
+  // } else if (username == "wewe2") {
+  //   return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJqdGkiOiJTSzg2YWY4NGIxM2QwNTNmMDhhODhhOGYxZTFiNWE5YTIwLTE2NjgwNjU4MjgiLCJncmFudHMiOnsiaWRlbnRpdHkiOiJCdWtldDIiLCJjaGF0Ijp7InNlcnZpY2Vfc2lkIjoiSVMzYTYzMmNiYjUyYmE0NzU3YjBiNTA5YzExNzQzZGI0OSJ9fSwiaWF0IjoxNjY4MDY1ODI4LCJleHAiOjE2NjgwNjk0MjgsImlzcyI6IlNLODZhZjg0YjEzZDA1M2YwOGE4OGE4ZjFlMWI1YTlhMjAiLCJzdWIiOiJBQzJhYjE1NjE5OWM4NWNjZDZjNDU1YjRmM2M2NDRlMDFjIn0.UMPZKqloWTnHSoHeQJuL-c3-giZn7mqiZJyFo-aTsBw";
+  // }
+
+  // return "";
 }
 
 export async function getMessageStatus(

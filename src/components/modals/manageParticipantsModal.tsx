@@ -33,7 +33,7 @@ const ManageParticipantsModal: React.FC<ManageParticipantsModalProps> = (
   props: ManageParticipantsModalProps
 ) => {
   const menu = useMenuState({ placement: "bottom-start" });
-
+  console.log(props.participantsList);
   return (
     <>
       <ConvoModal

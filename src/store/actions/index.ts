@@ -63,6 +63,10 @@ interface UpdateUnreadMessages {
   type: ActionType.UPDATE_UNREAD_MESSAGES;
   payload: { channelSid: string; unreadCount: number };
 }
+interface UpdateParticipantsStatus {
+  type: ActionType.REACHABILITY_CHANGED;
+  payload: { user: any; updateReasons: any };
+}
 
 interface UpdateConversation {
   type: ActionType.UPDATE_CONVERSATION;
@@ -126,4 +130,5 @@ export type Action =
   | TypingStarted
   | TypingEnded
   | AddNotifications
+  | UpdateParticipantsStatus
   | RemoveNotifications;
